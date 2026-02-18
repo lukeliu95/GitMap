@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitMap - GitHub 业务分析师</title>
+    <meta name="description" content="面向产品经理的 GitHub 项目分析神器。深度阅读代码，生成 Mermaid 可视化业务文档。">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mermaid JS -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            fontFamily: '"DM Sans", sans-serif'
+        });
+    </script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            bg: '#0F172A',      // Slate 900
+                            surface: '#1E293B', // Slate 800
+                            border: '#334155',  // Slate 700
+                            primary: '#22C55E', // Green 500
+                            primaryHover: '#16A34A', // Green 600
+                            text: '#F8FAFC',    // Slate 50
+                            muted: '#94A3B8',   // Slate 400
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #F8FAFC;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #22C55E 0%, #3B82F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-brand-primary selection:text-white">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 top-0 left-0 border-b border-brand-border/30 bg-brand-bg/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="32" height="32" rx="8" fill="#22C55E" fill-opacity="0.2"/>
+                        <path d="M10 8V24" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M10 16H16" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="10" cy="8" r="3" fill="#0F172A" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="10" cy="24" r="3" fill="#0F172A" stroke="#22C55E" stroke-width="2"/>
+                        <circle cx="22" cy="16" r="5" fill="#0F172A" stroke="#22C55E" stroke-width="2"/>
+                        <path d="M20 14L24 18M24 14L20 18" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <span class="font-display font-bold text-xl tracking-tight">GitMap</span>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-sm font-medium text-brand-muted hover:text-brand-primary transition-colors">功能特性</a>
+                    <a href="#case-study" class="text-sm font-medium text-brand-muted hover:text-brand-primary transition-colors">案例展示</a>
+                    <a href="#how-it-works" class="text-sm font-medium text-brand-muted hover:text-brand-primary transition-colors">使用指南</a>
+                    <a href="#obsidian" class="text-sm font-medium text-brand-muted hover:text-brand-primary transition-colors">Obsidian 联动</a>
+                </div>
+
+                <a href="https://github.com/trae-ai/skills" target="_blank" class="hidden md:flex items-center gap-2 bg-brand-surface border border-brand-border hover:border-brand-primary px-4 py-2 rounded-full transition-all group">
+                    <span class="text-sm font-medium">Install Skill</span>
+                    <svg class="w-4 h-4 text-brand-muted group-hover:text-brand-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+            <div class="absolute top-20 right-0 w-96 h-96 bg-brand-primary/20 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+            <div class="absolute bottom-0 left-0 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl opacity-20"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-semibold mb-8">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-primary opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-primary"></span>
+                </span>
+                AI 驱动的 GitHub 项目分析师
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-display font-bold tracking-tight mb-6">
+                让代码逻辑<br>
+                <span class="gradient-text">跃然纸上</span>
+            </h1>
+            
+            <p class="text-xl text-brand-muted max-w-2xl mx-auto mb-10 leading-relaxed">
+                专为产品经理打造。GitMap 深度阅读 GitHub 项目代码，自动生成 
+                <span class="text-brand-text font-semibold">6 大维度业务文档</span> 
+                与 <span class="text-brand-text font-semibold">Mermaid 可视化图表</span>。
+                <br class="hidden md:block">无需懂技术，瞬间掌握项目核心逻辑。
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div class="bg-brand-surface border border-brand-border rounded-lg p-1 px-2 flex items-center gap-3 text-left w-full max-w-md shadow-lg">
+                    <div class="bg-black/30 p-2 rounded text-brand-muted font-mono text-sm select-all">
+                        GitMap: 分析 https://github.com/owner/repo
+                    </div>
+                    <button class="ml-auto bg-brand-primary hover:bg-brand-primaryHover text-brand-bg font-bold py-2 px-4 rounded transition-colors text-sm" onclick="navigator.clipboard.writeText('GitMap: 分析 https://github.com/owner/repo'); alert('指令已复制！在 Trae 中粘贴即可运行。')">
+                        复制指令
+                    </button>
+                </div>
+            </div>
+            
+            <p class="mt-4 text-sm text-brand-muted">
+                支持 <span class="text-brand-text">OpenCode</span> 与 <span class="text-brand-text">Claude Code</span> 运行环境
+            </p>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-20 bg-brand-bg relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-display font-bold mb-4">6 大维度全景分析</h2>
+                <p class="text-brand-muted">GitMap 不只是读代码，更懂业务逻辑。自动生成以下 6 篇深度文档。</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass-card p-6 rounded-2xl hover:border-brand-primary/50 transition-all duration-300 group">
+                    <div class="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-display font-bold mb-2">00-项目全景</h3>
+                    <p class="text-brand-muted text-sm leading-relaxed">一句话讲清项目定位。包含产品功能全景图（Mindmap）和核心价值主张。</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card p-6 rounded-2xl hover:border-brand-primary/50 transition-all duration-300 group">
+                    <div class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-display font-bold mb-2">01-用户旅程</h3>
+                    <p class="text-brand-muted text-sm leading-relaxed">用户如何使用产品？通过 Journey 图和时序图还原核心体验路径。</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card p-6 rounded-2xl hover:border-brand-primary/50 transition-all duration-300 group">
+                    <div class="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-display font-bold mb-2">02-核心功能</h3>
+                    <p class="text-brand-muted text-sm leading-relaxed">拆解关键功能运作机制。状态机图（State Diagram）展示复杂逻辑流转。</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="glass-card p-6 rounded-2xl hover:border-brand-primary/50 transition-all duration-300 group">
+                    <div class="w-12 h-12 bg-yellow-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                    </div>
+                    <h3 class="text-xl font-display font-bold mb-2">03-数据模型</h3>
+                    <p class="text-brand-muted text-sm leading-relaxed">系统里有哪些数据？ER 图直观展示实体关系，搞懂业务底层逻辑。</p>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="glass-card p-6 rounded-2xl hover:border-brand-primary/50 transition-all duration-300 group">
+                    <div class="w-12 h-12 bg-pink-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                    </div>
+                    <h3 class="text-xl font-display font-bold mb-2">04-模块架构</h3>
+                    <p class="text-brand-muted text-sm leading-relaxed">技术栈是什么？模块间如何依赖？架构图一目了然。</p>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="glass-card p-6 rounded-2xl hover:border-brand-primary/50 transition-all duration-300 group">
+                    <div class="w-12 h-12 bg-cyan-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>
+                    <h3 class="text-xl font-display font-bold mb-2">05-API 交互</h3>
+                    <p class="text-brand-muted text-sm leading-relaxed">前后端如何通信？第三方服务如何集成？时序图还原数据流向。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Case Study Section -->
+    <section id="case-study" class="py-20 bg-brand-surface/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold mb-4">
+                    Live Demo
+                </div>
+                <h2 class="text-3xl font-display font-bold mb-4">真实案例：Claudian 分析报告</h2>
+                <p class="text-brand-muted max-w-2xl mx-auto">
+                    这是 GitMap 对 <a href="https://github.com/YishenTu/claudian" target="_blank" class="text-brand-primary hover:underline">Claudian</a> 项目生成的真实分析文档（00-overview.md）。
+                    <br>所有图表均由 Mermaid 自动生成，文字由 AI 深度提炼。
+                </p>
+            </div>
+
+            <!-- Case Study Content Container -->
+            <div class="bg-brand-bg border border-brand-border rounded-2xl overflow-hidden shadow-2xl">
+                <!-- File Header -->
+                <div class="bg-brand-surface px-6 py-4 border-b border-brand-border flex items-center gap-3">
+                    <div class="flex gap-1.5">
+                        <div class="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                    </div>
+                    <span class="text-sm font-mono text-brand-muted ml-2">docs/explain/00-overview.md</span>
+                </div>
+
+                <!-- Markdown Content Area -->
+                <div class="p-8 md:p-12 space-y-16">
+                    
+                    <!-- 1. Introduction -->
+                    <div>
+                        <h3 class="text-2xl font-bold text-brand-text mb-4"># 项目全景鸟瞰</h3>
+                        <p class="text-brand-muted leading-relaxed">
+                            <strong>Claudian</strong> 是一款将 Claude Code AI 助手深度集成到 Obsidian 笔记软件中的插件，让用户可以在笔记工作流中直接调用 AI 进行文件读写、代码编辑、搜索分析和多步骤自动化任务。
+                        </p>
+                    </div>
+
+                    <!-- 2. Core Value Prop (Mermaid) -->
+                    <div>
+                        <h4 class="text-xl font-semibold text-brand-text mb-6">## 核心价值主张</h4>
+                        <div class="mermaid bg-brand-surface/30 p-6 rounded-lg overflow-x-auto">
+                            flowchart LR
+                                A[用户痛点] --> B[我们的解决方案]
+                                B --> C[用户收益]
+                                
+                                A1[在笔记和AI工具间<br/>频繁切换] --> B1[AI直接嵌入<br/>Obsidian侧边栏]
+                                A2[AI无法访问<br/>本地笔记内容] --> B2[笔记库成为AI<br/>工作目录]
+                                A3[重复性编辑任务<br/>耗时费力] --> B3[AI自动读写<br/>批量处理文件]
+                                A4[需要编写代码<br/>分析笔记数据] --> B4[AI执行bash命令<br/>搜索和分析]
+                                
+                                B1 --> C1[工作流无缝衔接<br/>无需切换窗口]
+                                B2 --> C2[AI理解全部上下文<br/>回答更精准]
+                                B3 --> C3[10倍提升<br/>笔记整理效率]
+                                B4 --> C4[零基础也能<br/>自动化处理笔记]
+                                
+                                style A fill:#334155,stroke:#334155,color:#fff
+                                style C fill:#15803d,stroke:#15803d,color:#fff
+                                style B fill:#1e293b,stroke:#334155,color:#fff
+                                style A1 fill:#334155,stroke:#334155,color:#fff
+                                style A2 fill:#334155,stroke:#334155,color:#fff
+                                style A3 fill:#334155,stroke:#334155,color:#fff
+                                style A4 fill:#334155,stroke:#334155,color:#fff
+                                style B1 fill:#1e293b,stroke:#334155,color:#fff
+                                style B2 fill:#1e293b,stroke:#334155,color:#fff
+                                style B3 fill:#1e293b,stroke:#334155,color:#fff
+                                style B4 fill:#1e293b,stroke:#334155,color:#fff
+                                style C1 fill:#15803d,stroke:#15803d,color:#fff
+                                style C2 fill:#15803d,stroke:#15803d,color:#fff
+                                style C3 fill:#15803d,stroke:#15803d,color:#fff
+                                style C4 fill:#15803d,stroke:#15803d,color:#fff
+                        </div>
+                    </div>
+
+                    <!-- 3. Product Features (Mindmap) -->
+                    <div>
+                        <h4 class="text-xl font-semibold text-brand-text mb-6">## 产品功能全景图</h4>
+                        <div class="mermaid bg-brand-surface/30 p-6 rounded-lg overflow-x-auto">
+                            mindmap
+                              root((Claudian))
+                                核心交互
+                                  侧边栏聊天
+                                  行内编辑
+                                上下文管理
+                                  自动上下文
+                                  @提及系统
+                                  图片支持
+                                  外部目录
+                                AI能力
+                                  文件操作
+                                  搜索分析
+                                  Bash命令
+                                  规划模式
+                                扩展系统
+                                  Skills技能
+                                  自定义Agent
+                                  Slash命令
+                                  MCP支持
+                                  Claude Code插件
+                                安全控制
+                                  权限模式
+                                  命令黑名单
+                                  路径限制
+                                模型配置
+                                  模型选择
+                                  高级选项
+                        </div>
+                    </div>
+
+                    <!-- 4. Target Audience (Table) -->
+                    <div>
+                        <h4 class="text-xl font-semibold text-brand-text mb-6">## 目标用户画像</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="border-b border-brand-border">
+                                        <th class="py-3 px-4 font-semibold text-brand-text whitespace-nowrap">用户类型</th>
+                                        <th class="py-3 px-4 font-semibold text-brand-text">特征</th>
+                                        <th class="py-3 px-4 font-semibold text-brand-text">核心价值</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-brand-muted">
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 text-brand-primary font-medium">知识管理专家</td>
+                                        <td class="py-3 px-4">重度 Obsidian 用户，笔记量大</td>
+                                        <td class="py-3 px-4">自动化繁琐的笔记维护工作</td>
+                                    </tr>
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 text-brand-primary font-medium">程序员/开发者</td>
+                                        <td class="py-3 px-4">使用 Obsidian 记录代码笔记</td>
+                                        <td class="py-3 px-4">在笔记中直接获得 AI 编程辅助</td>
+                                    </tr>
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 text-brand-primary font-medium">学术研究者</td>
+                                        <td class="py-3 px-4">管理大量文献笔记</td>
+                                        <td class="py-3 px-4">加速文献综述和知识整合</td>
+                                    </tr>
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 text-brand-primary font-medium">内容创作者</td>
+                                        <td class="py-3 px-4">用 Obsidian 管理创作素材</td>
+                                        <td class="py-3 px-4">从碎片笔记到完整内容</td>
+                                    </tr>
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 text-brand-primary font-medium">项目经理</td>
+                                        <td class="py-3 px-4">用 Obsidian 管理项目文档</td>
+                                        <td class="py-3 px-4">自动化项目文档维护</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 5. Tech Stack (Mermaid) -->
+                    <div>
+                        <h4 class="text-xl font-semibold text-brand-text mb-6">## 技术栈概览</h4>
+                        <div class="mermaid bg-brand-surface/30 p-6 rounded-lg overflow-x-auto">
+                            flowchart TB
+                                subgraph 宿主环境["宿主环境 (Obsidian)"]
+                                    A1[Electron App]
+                                    A2[Workspace API]
+                                    A3[Vault 文件系统]
+                                end
+                                
+                                subgraph 插件层["插件层 (TypeScript)"]
+                                    B1[main.ts 入口]
+                                    B2[ClaudianView 视图]
+                                end
+                                
+                                subgraph 核心层["核心层 (Core)"]
+                                    C1[ClaudianService<br/>SDK封装]
+                                    C2[AgentManager]
+                                end
+                                
+                                subgraph 外部服务["外部服务"]
+                                    E1[Anthropic API]
+                                    E2[Claude CLI]
+                                end
+                                
+                                A1 --> B1
+                                B1 --> C1
+                                C1 --> E1
+                                C1 --> E2
+                                
+                                style E1 fill:#0ea5e9,stroke:#0ea5e9,color:#fff
+                                style E2 fill:#f59e0b,stroke:#f59e0b,color:#fff
+                                style A1 fill:#334155,stroke:#334155,color:#fff
+                                style A2 fill:#334155,stroke:#334155,color:#fff
+                                style A3 fill:#334155,stroke:#334155,color:#fff
+                                style B1 fill:#1e293b,stroke:#334155,color:#fff
+                                style B2 fill:#1e293b,stroke:#334155,color:#fff
+                                style C1 fill:#1e293b,stroke:#334155,color:#fff
+                                style C2 fill:#1e293b,stroke:#334155,color:#fff
+                        </div>
+                    </div>
+
+                    <!-- 6. Data Flow (Mermaid) -->
+                    <div>
+                        <h4 class="text-xl font-semibold text-brand-text mb-6">## 核心数据流转</h4>
+                        <div class="mermaid bg-brand-surface/30 p-6 rounded-lg overflow-x-auto">
+                            sequenceDiagram
+                                actor U as 用户
+                                participant O as Obsidian
+                                participant P as Claudian插件
+                                participant S as ClaudianService
+                                participant SDK as Agent SDK
+                                participant API as Anthropic API
+                                
+                                U->>O: 1. 打开侧边栏
+                                O->>P: 2. 激活ClaudianView
+                                P->>S: 3. 初始化服务
+                                
+                                U->>P: 4. 输入消息 + @引用笔记
+                                P->>P: 5. 解析@提及
+                                P->>O: 6. 读取引用的笔记内容
+                                O-->>P: 7. 返回笔记内容
+                                
+                                P->>S: 8. 发送消息(含上下文)
+                                S->>SDK: 9. 调用query()
+                                SDK->>API: 10. HTTP请求
+                                
+                                loop 流式响应
+                                    API-->>SDK: 11. SSE数据流
+                                    SDK-->>S: 12. 流式回调
+                                    S-->>P: 13. 更新UI
+                                    P-->>U: 14. 显示响应
+                                end
+                                
+                                alt 需要工具调用
+                                    API-->>SDK: 15. tool_use请求
+                                    SDK-->>S: 16. 工具调用事件
+                                    S->>P: 17. 请求权限
+                                    P->>U: 18. 显示确认对话框
+                                    U->>P: 19. 确认执行
+                                    P->>O: 20. 执行工具操作
+                                    O-->>P: 21. 返回结果
+                                    P->>S: 22. 发送工具结果
+                                    S->>SDK: 23. 继续对话
+                                end
+                        </div>
+                    </div>
+
+                    <!-- 7. Product Differentiation (Table) -->
+                    <div>
+                        <h4 class="text-xl font-semibold text-brand-text mb-6">## 产品差异化优势</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="border-b border-brand-border">
+                                        <th class="py-3 px-4 font-semibold text-brand-text">维度</th>
+                                        <th class="py-3 px-4 font-semibold text-brand-text">传统AI助手</th>
+                                        <th class="py-3 px-4 font-semibold text-brand-text">其他Obsidian AI插件</th>
+                                        <th class="py-3 px-4 font-semibold text-brand-primary">Claudian</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-brand-muted">
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 font-medium text-brand-text">集成深度</td>
+                                        <td class="py-3 px-4">独立应用，需复制粘贴</td>
+                                        <td class="py-3 px-4">仅能读取当前笔记</td>
+                                        <td class="py-3 px-4 text-brand-primary">完整 Agent 能力，可读写所有笔记</td>
+                                    </tr>
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 font-medium text-brand-text">上下文理解</td>
+                                        <td class="py-3 px-4">需手动提供上下文</td>
+                                        <td class="py-3 px-4">仅当前笔记内容</td>
+                                        <td class="py-3 px-4 text-brand-primary">自动关联@提及笔记+选中文本</td>
+                                    </tr>
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 font-medium text-brand-text">文件操作</td>
+                                        <td class="py-3 px-4">不能直接操作本地文件</td>
+                                        <td class="py-3 px-4">只读，无法编辑</td>
+                                        <td class="py-3 px-4 text-brand-primary">完整的读写编辑能力</td>
+                                    </tr>
+                                    <tr class="border-b border-brand-border/50 hover:bg-brand-surface/30 transition-colors">
+                                        <td class="py-3 px-4 font-medium text-brand-text">扩展性</td>
+                                        <td class="py-3 px-4">固定功能</td>
+                                        <td class="py-3 px-4">有限扩展</td>
+                                        <td class="py-3 px-4 text-brand-primary">Skills + Agent + MCP + 插件</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Footer of the fake window -->
+                <div class="bg-brand-surface px-6 py-3 border-t border-brand-border text-center">
+                    <p class="text-xs text-brand-muted">
+                        以上内容由 GitMap 自动生成，未做任何人工修改。
+                        <a href="#how-it-works" class="text-brand-primary hover:underline ml-1">立即试用</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Obsidian Integration -->
+    <section id="obsidian" class="py-20 bg-brand-surface/30 border-y border-brand-border/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row items-center gap-12">
+                <div class="lg:w-1/2">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold mb-6">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M21.602 14.326c-.464-3.195-2.64-6.494-5.594-7.55-.262-.094-.658-.063-.808.188-.415.698-.847 1.34-1.28 2.015-1.168-.451-2.42-.659-3.663-.61-1.27.05-2.528.375-3.682.946l-1.025-1.572c-.173-.266-.607-.297-.837-.152-2.73 1.716-4.324 4.87-4.223 8.082.022.704.113 1.442.268 2.128.093.41.488.663.882.566l1.24-.306c-.035-.356-.046-.72-.034-1.096.096-3.084 1.79-5.32 4.417-5.835 1.486-.29 2.982-.123 4.398.49.52.226 1.01.503 1.464.829-1.396.963-2.673 2.126-3.792 3.453-1.134 1.344-2.032 2.87-2.668 4.532-.124.323.09.684.428.718l1.45.147c2.39.243 4.79-.317 6.946-1.62 2.112-1.278 3.737-3.213 4.67-5.564.205-.516.326-1.076.36-1.64.01-.174.02-.349.03-.524h.002z"/></svg>
+                        最佳拍档
+                    </div>
+                    <h2 class="text-3xl lg:text-4xl font-display font-bold mb-6">
+                        结合 <span class="text-purple-400">Obsidian</span><br>
+                        体验极致可视化
+                    </h2>
+                    <p class="text-brand-muted text-lg mb-8 leading-relaxed">
+                        生成的文档包含大量 Mermaid 图表代码。使用 Obsidian 打开生成的 `docs/explain` 文件夹，即可实时渲染精美流程图。
+                    </p>
+                    <ul class="space-y-4 mb-8">
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1 w-5 h-5 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <span class="text-brand-text">原生支持 Mermaid，无需插件</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1 w-5 h-5 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <span class="text-brand-text">双向链接，构建知识网络</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1 w-5 h-5 rounded-full bg-brand-primary/20 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <span class="text-brand-text">图文对照，理解更深刻</span>
+                        </li>
+                    </ul>
+
+                    <!-- Claudian Promo -->
+                    <div class="p-4 rounded-lg bg-gradient-to-r from-brand-surface to-brand-bg border border-brand-border hover:border-brand-primary/50 transition-colors group">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-brand-primary tracking-wide uppercase">Pro Tip</span>
+                            <a href="https://github.com/YishenTu/claudian" target="_blank" class="text-xs text-brand-muted hover:text-brand-primary flex items-center gap-1 transition-colors">
+                                View on GitHub
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                            </a>
+                        </div>
+                        <h4 class="font-bold text-brand-text mb-1">使用 <span class="text-white">Claudian</span> 插件</h4>
+                        <p class="text-sm text-brand-muted leading-relaxed">
+                            想要无需切换窗口？安装 <a href="https://github.com/YishenTu/claudian" target="_blank" class="text-brand-primary hover:underline">Claudian</a> 插件，直接在 Obsidian 内部运行 Claude Code，实现分析、生成、阅读的一站式体验。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="lg:w-1/2 relative">
+                    <!-- Decorative mock window -->
+                    <div class="bg-[#1E1E1E] rounded-xl border border-gray-700 shadow-2xl overflow-hidden transform rotate-2 hover:rotate-0 transition-transform duration-500">
+                        <div class="flex items-center gap-2 px-4 py-3 bg-[#2D2D2D] border-b border-gray-700">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="ml-2 text-xs text-gray-400 font-mono">01-user-journey.md - Obsidian</span>
+                        </div>
+                        <div class="p-6 font-mono text-sm">
+                            <div class="text-purple-400 mb-2">```mermaid</div>
+                            <div class="text-blue-300 pl-4">sequenceDiagram</div>
+                            <div class="text-gray-300 pl-4">User->>Frontend: 点击购买</div>
+                            <div class="text-gray-300 pl-4">Frontend->>API: POST /orders</div>
+                            <div class="text-gray-300 pl-4">API->>Database: Insert Order</div>
+                            <div class="text-gray-300 pl-4">Database-->>API: Success</div>
+                            <div class="text-gray-300 pl-4">API-->>Frontend: 200 OK</div>
+                            <div class="text-purple-400">```</div>
+                            
+                            <div class="mt-6 p-4 bg-[#0F172A] rounded border border-gray-700 flex flex-col items-center gap-4">
+                                <!-- Mock rendered chart -->
+                                <div class="w-full flex justify-between items-center px-8">
+                                    <div class="h-8 w-20 bg-brand-surface border border-brand-border rounded flex items-center justify-center text-xs">User</div>
+                                    <div class="h-8 w-20 bg-brand-surface border border-brand-border rounded flex items-center justify-center text-xs">Frontend</div>
+                                    <div class="h-8 w-20 bg-brand-surface border border-brand-border rounded flex items-center justify-center text-xs">API</div>
+                                </div>
+                                <div class="w-full h-px bg-gray-700 relative top-0"></div>
+                                <div class="text-xs text-gray-500">Rendered Mermaid Chart Preview</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-brand-border/30 text-center">
+        <div class="flex items-center justify-center gap-2 mb-4">
+             <svg width="24" height="24" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="8" fill="#22C55E" fill-opacity="0.2"/>
+                <path d="M10 8V24" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="10" cy="8" r="3" fill="#0F172A" stroke="#22C55E" stroke-width="2"/>
+                <circle cx="22" cy="16" r="5" fill="#0F172A" stroke="#22C55E" stroke-width="2"/>
+                <path d="M20 14L24 18M24 14L20 18" stroke="#22C55E" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="font-display font-bold text-lg">GitMap</span>
+        </div>
+        <p class="text-brand-muted text-sm">
+            Designed for Trae & Claude Code. Made with ❤️ by Skill Creator.
+        </p>
+    </footer>
+
+</body>
+</html>
